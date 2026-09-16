@@ -1,0 +1,85 @@
+import org.algorithm_visualizer.*;
+
+class Main {
+
+    private static String[] text = {"h", "e", "l", "l", "o", " ", "s", "i", "r", " ", "h", "e", "l", "l", "o"};
+
+    private static String[] pattern = {"h", "e", "l", "l", "o"};
+
+    private static final int Q = 101; // A prime number
+
+    private static final int D = 256; // number of characters in the input alphabet
+
+    private static LogTracer logger = new LogTracer();
+
+    private static Array1DTracer tracer1 = new Array1DTracer("Text");
+
+    private static Array1DTracer tracer2 = new Array1DTracer("Pattern");
+
+    public static void main(String[] args) {
+        Layout.setRoot(new VerticalLayout(new Commander[]{logger, tracer1, tracer2}));
+        tracer1.set(text);
+        tracer2.set(pattern);
+        Tracer.delay();
+
+        int N = text.length;
+        int M = pattern.length;
+
+        int hashText = 0; // hash value for text
+        int hashPattern = 0; // hash value for pattern
+        int h = 1;
+
+        for (int i = 0; i < M - 1; i++) {
+            h = (h * D) % Q;
+        }
+
+        for (int i = 0; i < M; i++) {
+            hashPattern = (D * hashPattern + pattern[i].charAt(0)) % Q;
+            hashText = (D * hashText + text[i].charAt(0)) % Q;
+        }
+
+        for (int i = 0; i <= N - M; i++) {
+            /*
+            Check if hash values of current window of text matches
+            with hash values of pattern. If match is found then
+            check for characters one by one
+            */
+            if (hashPattern == hashText) {
+                int f = 0;
+                tracer1.select(i, i + M - 1);
+                Tracer.delay();
+                tracer2.select(0, M - 1);
+                Tracer.delay();
+                for (int j = 0; j < M; j++) {
+                    tracer1.patch(i + j);
+                    Tracer.delay();
+                    tracer2.patch(j);
+                    Tracer.delay();
+                    if (!text[i + j].equals(pattern[j])) {
+                        f++;
+                    }
+                    tracer1.depatch(i + j);
+                    tracer2.depatch(j);
+                }
+
+                if (f == 0) {
+                    logger.println(" Pattern found at index " + i);
+                }
+                tracer1.deselect(i, i + M);
+                tracer2.deselect(0, M - 1);
+            }
+
+            /*
+            Calculate hash value for next window of text:
+            */
+            if (i < N - M) {
+                hashText = (D * (hashText - text[i].charAt(0) * h) + text[i + M].charAt(0)) % Q;
+
+                // Convert negative value of hashText (if found) to positive
+                if (hashText < 0) {
+                    hashText += Q;
+                }
+            }
+        }
+    }
+}
